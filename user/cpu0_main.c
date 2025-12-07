@@ -71,7 +71,8 @@ int core0_main(void)
     ips114_clear();
     ips114_full(RGB565_WHITE);
     ips114_show_rgb565_image(0, 27, (const uint16 *)gImage_seekfree_logo, 240, 80, 240, 80, 0);
-    system_delay_ms(800);
+    system_delay_ms(1000);
+    mt9v03x_init();
     ips114_clear();
 
     gpio_init(DIR_R, GPO, GPIO_HIGH, GPO_PUSH_PULL); // GPIO 初始化为输出 默认上拉输出高
@@ -98,15 +99,19 @@ int core0_main(void)
     system_delay_ms(1000);
     while (TRUE)
     {
-        // 此处编写需要循环执行的代码
-        system_delay_ms(10);
+        if (mt9v03x_finish_flag)
+        {
+            // ips114_displayimage03x((const uint8 *)mt9v03x_image, 188, 120);                                 // 显示原始图像
+            ips114_show_gray_image(0, 0, (const uint8 *)mt9v03x_image, MT9V03X_W, MT9V03X_H, MT9V03X_W, MT9V03X_H, 160); // 显示灰度图像
+            mt9v03x_finish_flag = 0;
+        }
         // ips114_clear();
-        ips114_show_string(0, 0, "L_speed:");
-        ips114_show_string(0, 40, "R_speed:");
-        ips114_show_string(0, 80, "Diff:");
-        ips114_show_int(80, 0, WHEEL_SPEED_L, 5);  // 显示编码器1计数值
-        ips114_show_int(80, 40, WHEEL_SPEED_R, 5); // 显示编码器3计数值
-        ips114_show_int(80, 80, WHEEL_SPEED_L - WHEEL_SPEED_R, 5);
+        // ips114_show_string(0, 0, "L_speed:");
+        // ips114_show_string(0, 40, "R_speed:");
+        // ips114_show_string(0, 80, "Diff:");
+        // ips114_show_int(0, 120, WHEEL_SPEED_L, 5);  // 显示编码器1计数值
+        // ips114_show_int(40, 120, WHEEL_SPEED_R, 5); // 显示编码器3计数值
+        // ips114_show_int(80, 120, WHEEL_SPEED_L - WHEEL_SPEED_R, 5);
         // 爆艹PID
 
         // 此处编写需要循环执行的代码
@@ -121,8 +126,8 @@ IFX_INTERRUPT(cc60_pit_ch0_isr, 0, CCU6_0_CH0_ISR_PRIORITY)
     WHEEL_SPEED_R = encoder_get_count(ENCODER_3) / 60;
     encoder_clear_count(ENCODER_1);
     encoder_clear_count(ENCODER_3);
-    int err_L = TARGET_SPEED - WHEEL_SPEED_L;
-    int err_R = TARGET_SPEED - WHEEL_SPEED_R;
+    // int err_L = TARGET_SPEED - WHEEL_SPEED_L;
+    // int err_R = TARGET_SPEED - WHEEL_SPEED_R;
 }
 
 IFX_INTERRUPT(cc60_pit_ch1_isr, 0, CCU6_0_CH1_ISR_PRIORITY)

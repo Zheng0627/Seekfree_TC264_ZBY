@@ -193,7 +193,7 @@ static uint8 mt9v03x_get_config (int16 buff[MT9V03X_CONFIG_FINISH - 1][2])
         uart_buffer[3] = (uint8)temp;
         uart_write_buffer(MT9V03X_COF_UART, uart_buffer, 4);
 
-        timeout_count = 0;    
+        timeout_count = 0;
         do
         {
             if(3 <= fifo_used(&camera_receiver_fifo))

@@ -260,7 +260,7 @@ static void ips114_debug_init (void)
     }
     info.output_screen = ips114_show_string;
     info.output_screen_clear = ips114_clear;
-        
+
     debug_output_init(&info);
 }
 
@@ -556,7 +556,7 @@ void ips114_show_string (uint16 x, uint16 y, const char dat[])
     // 那么一般是屏幕显示的时候超过屏幕分辨率范围了
     zf_assert(x < ips114_width_max);
     zf_assert(y < ips114_height_max);
-    
+
     uint16 j = 0;
     while('\0' != dat[j])
     {
@@ -884,7 +884,7 @@ void ips114_show_wave (uint16 x, uint16 y, const uint16 *wave, uint16 width, uin
     {
         for(i = 0; i < dis_width; i ++)
         {
-            data_buffer[i] = (ips114_bgcolor); 
+            data_buffer[i] = (ips114_bgcolor);
         }
         ips114_write_16bit_data_array(data_buffer, dis_width);
     }
@@ -918,15 +918,15 @@ void ips114_show_chinese (uint16 x, uint16 y, uint8 size, const uint8 *chinese_b
     zf_assert(y < ips114_height_max);
     zf_assert(NULL != chinese_buffer);
 
-    int i = 0, j = 0, k = 0; 
+    int i = 0, j = 0, k = 0;
     uint8 temp = 0, temp1 = 0, temp2 = 0;
     const uint8 *p_data = chinese_buffer;
-    
+
     temp2 = size / 8;
 
     IPS114_CS(0);
     ips114_set_region(x, y, number * size - 1 + x, y + size - 1);
-    
+
     for(i = 0; i < size; i ++)
     {
         temp1 = number;
@@ -950,7 +950,7 @@ void ips114_show_chinese (uint16 x, uint16 y, uint8 size, const uint8 *chinese_b
                 p_data ++;
             }
             p_data = p_data - temp2 + temp2 * size;
-        }   
+        }
     }
     IPS114_CS(1);
 }
