@@ -32,7 +32,7 @@
  * 日期              作者                备注
  * 2022-09-15       pudding            first version
  * 2025-12-05       Zheng              添加IPS114液晶屏显示代码
- * 2025-12-06       Zheng              添加电机编码器测速代码(但是没操出来PID)
+ * 2025-12-06       Zheng              添加电机编码器测速代码
  ********************************************************************************************************************/
 #include "zf_common_headfile.h"
 #pragma section all "cpu0_dsram"
@@ -118,6 +118,9 @@ int core0_main(void)
     }
 }
 
+/*这个中断函数用来计算轮速
+每60ms进入一次中断
+*/
 IFX_INTERRUPT(cc60_pit_ch0_isr, 0, CCU6_0_CH0_ISR_PRIORITY)
 {
     interrupt_global_enable(0); // 开启中断嵌套
@@ -130,6 +133,9 @@ IFX_INTERRUPT(cc60_pit_ch0_isr, 0, CCU6_0_CH0_ISR_PRIORITY)
     // int err_R = TARGET_SPEED - WHEEL_SPEED_R;
 }
 
+/*这个中断函数用来点灯
+不知道有什么用，但是很爽:>
+*/
 IFX_INTERRUPT(cc60_pit_ch1_isr, 0, CCU6_0_CH1_ISR_PRIORITY)
 {
     interrupt_global_enable(0); // 开启中断嵌套
