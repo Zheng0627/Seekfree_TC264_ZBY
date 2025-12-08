@@ -101,8 +101,8 @@ int core0_main(void)
     {
         if (mt9v03x_finish_flag)
         {
-            // ips114_displayimage03x((const uint8 *)mt9v03x_image, 188, 120);                                 // 显示原始图像
-            ips114_show_gray_image(0, 0, (const uint8 *)mt9v03x_image, MT9V03X_W, MT9V03X_H, MT9V03X_W, MT9V03X_H, 160); // 显示灰度图像
+            ips114_displayimage03x((const uint8 *)mt9v03x_image, 188, 120); // 显示原始图像
+            // ips114_show_gray_image(0, 0, (const uint8 *)mt9v03x_image, MT9V03X_W, MT9V03X_H, MT9V03X_W, MT9V03X_H, 160); // 显示灰度图像
             mt9v03x_finish_flag = 0;
         }
         // ips114_clear();
