@@ -18,6 +18,5 @@
 >
 > 公司名称：成都逐飞科技有限公司
 > 版本信息：见 `libraries/doc/version`
-> 开发环境：ADS v1.10.2
-> 适用平台：TC264D
-> 店铺链接：<https://seekfree.taobao.com/>
+> 开发环境：ADS v1.10.2 or later
+> 适用平台：Seekfree TC264D
