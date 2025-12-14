@@ -39,14 +39,14 @@
 
 // **************************** 代码区域 ****************************
 
-
+uint8_t i = 0;
 void core1_main(void)
 {
     disable_Watchdog();                     // 关闭看门狗
     interrupt_global_enable(0);             // 打开全局中断
     // 此处编写用户代码 例如外设初始化代码等
 
-
+    seekfree_assistant_interface_init(SEEKFREE_ASSISTANT_DEBUG_UART);
 
     // 此处编写用户代码 例如外设初始化代码等
     cpu_wait_event_ready();                 // 等待所有核心初始化完毕
@@ -54,7 +54,19 @@ void core1_main(void)
     {
         // 此处编写需要循环执行的代码
 
+        for(uint8_t i = 0; i < SEEKFREE_ASSISTANT_SET_PARAMETR_COUNT; i++)
+                {
+                    // 更新标志位
+                    if(seekfree_assistant_parameter_update_flag[i])
+                    {
+                        seekfree_assistant_parameter_update_flag[i] = 0;
 
+                        // 通过DEBBUG串口发送信息
+                        printf("receive data channel : %d ", i);
+                        printf("data : %f ", seekfree_assistant_parameter[i]);
+                        printf("\r\n");
+                    }
+                }
 
         // 此处编写需要循环执行的代码
     }

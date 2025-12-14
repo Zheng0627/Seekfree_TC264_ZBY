@@ -85,7 +85,20 @@ static inline uint32_t pid_run(pid_ctrl_t *pid, float target, float measure, flo
     return (uint32_t)output;
 }
 
-static pid_ctrl_t pid_left = {.kp = 20.1f, .ki = 5.0f, .kd = 2.0f, .integral = 0.0f, .prev_err = 0.0f, .integral_limit = PID_INT_LIMIT};
+// ---------------------------------------------------------------------------------
+// PID 参数说明
+// kp（比例）：误差越大输出越大，主要影响响应速度与超调；过大易振荡。
+// ki（积分）：累积误差补偿，消除稳态误差；过大易积分饱和（风up），由 integral_limit 限幅避免。
+// kd（微分）：抑制误差变化率，降低超调与振荡；噪声环境下不宜过大。
+// integral：积分项内部状态，运行时自动维护，初始化为 0。
+// prev_err：上一次误差，供微分项计算，运行时自动维护，初始化为 0。
+// integral_limit：积分限幅，单位为占空比等效量；与 `PID_SAMPLE_MS` 采样周期共同影响积分速度。
+// 采样周期：`PID_SAMPLE_MS = 60ms`，`PID_SAMPLE_S = 0.06s`，与编码器更新保持一致。
+// 初始调参建议：kp 在 10~30，ki 在 2~12，kd 在 0.5~3（视电机/负载与噪声实际微调）。
+// ---------------------------------------------------------------------------------
+// 左轮 PID 参数（比例/积分/微分 可按需微调）
+static pid_ctrl_t pid_left = {.kp = 24.0f, .ki = 2.0f, .kd = 0.5f, .integral = 0.0f, .prev_err = 0.0f, .integral_limit = PID_INT_LIMIT};
+// 右轮 PID 参数（比例/积分/微分 可按需微调）
 static pid_ctrl_t pid_right = {.kp = 22.0f, .ki = 10.0f, .kd = 1.0f, .integral = 0.0f, .prev_err = 0.0f, .integral_limit = PID_INT_LIMIT};
 // 将本语句与#pragma section all restore语句之间的全局变量都放在CPU0的RAM中
 #pragma section all "cpu0_dsram"
@@ -161,9 +174,6 @@ int core0_main(void)
     cpu_wait_event_ready(); // 等待所有核心初始化完毕<务必保留>
     while (TRUE)
     {
-        // ips114_show_int(0, 0, TARGET_SPEED, 3);   // 显示目标速度
-        // ips114_show_int(0, 16, WHEEL_SPEED_L, 5); // 显示左轮速度
-        // ips114_show_int(0, 32, WHEEL_SPEED_R, 5); // 显示右轮速度
     }
 }
 
@@ -222,6 +232,9 @@ IFX_INTERRUPT(cc61_pit_ch0_isr, 0, CCU6_1_CH0_ISR_PRIORITY)
     {
         ips114_displayimage03x((const uint8 *)mt9v03x_image, MT9V03X_W, MT9V03X_H);                                          // 显示原始图像
         ips114_show_gray_image(MT9V03X_W, 0, (const uint8 *)mt9v03x_image, MT9V03X_W, MT9V03X_H, MT9V03X_W, MT9V03X_H, 100); // 显示灰度图像
+        ips114_show_int(0, 80, TARGET_SPEED, 3);                                                                             // 显示目标速度
+        ips114_show_int(40, 80, WHEEL_SPEED_L, 5);                                                                           // 显示左轮速度
+        ips114_show_int(80, 80, WHEEL_SPEED_R, 5);                                                                           // 显示右轮速度
         mt9v03x_finish_flag = 0;
     }
 }
