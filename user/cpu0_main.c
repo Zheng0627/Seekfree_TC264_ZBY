@@ -46,60 +46,7 @@
 #define PWM_L (ATOM0_CH5_P02_5)
 #define DIR_R (P02_6)
 #define PWM_R (ATOM0_CH7_P02_7)
-// PID 控制配置
-#define PID_SAMPLE_MS (60) // 与 CCU60_CH0 定时器周期保持一致
-#define PID_SAMPLE_S (PID_SAMPLE_MS / 1000.0f)
-#define PID_INT_LIMIT (400.0f) // 积分限幅，避免风up
-typedef struct
-{
-    float kp;
-    float ki;
-    float kd;
-    float integral;
-    float prev_err;
-    float integral_limit;
-} pid_ctrl_t;
 
-static inline float clamp_float(float val, float min, float max)
-{
-    if (val < min)
-    {
-        return min;
-    }
-    if (val > max)
-    {
-        return max;
-    }
-    return val;
-}
-
-static inline uint32_t pid_run(pid_ctrl_t *pid, float target, float measure, float base_duty)
-{
-    float err = target - measure;
-    pid->integral = clamp_float(pid->integral + err * PID_SAMPLE_S, -pid->integral_limit, pid->integral_limit);
-    float derivative = (err - pid->prev_err) / PID_SAMPLE_S;
-    pid->prev_err = err;
-
-    float output = base_duty + (pid->kp * err) + (pid->ki * pid->integral) + (pid->kd * derivative);
-    output = clamp_float(output, 0.0f, (float)PWM_DUTY_MAX);
-    return (uint32_t)output;
-}
-
-// ---------------------------------------------------------------------------------
-// PID 参数说明
-// kp（比例）：误差越大输出越大，主要影响响应速度与超调；过大易振荡。
-// ki（积分）：累积误差补偿，消除稳态误差；过大易积分饱和（风up），由 integral_limit 限幅避免。
-// kd（微分）：抑制误差变化率，降低超调与振荡；噪声环境下不宜过大。
-// integral：积分项内部状态，运行时自动维护，初始化为 0。
-// prev_err：上一次误差，供微分项计算，运行时自动维护，初始化为 0。
-// integral_limit：积分限幅，单位为占空比等效量；与 `PID_SAMPLE_MS` 采样周期共同影响积分速度。
-// 采样周期：`PID_SAMPLE_MS = 60ms`，`PID_SAMPLE_S = 0.06s`，与编码器更新保持一致。
-// 初始调参建议：kp 在 10~30，ki 在 2~12，kd 在 0.5~3（视电机/负载与噪声实际微调）。
-// ---------------------------------------------------------------------------------
-// 左轮 PID 参数（比例/积分/微分 可按需微调）
-static pid_ctrl_t pid_left = {.kp = 24.0f, .ki = 2.0f, .kd = 0.5f, .integral = 0.0f, .prev_err = 0.0f, .integral_limit = PID_INT_LIMIT};
-// 右轮 PID 参数（比例/积分/微分 可按需微调）
-static pid_ctrl_t pid_right = {.kp = 22.0f, .ki = 10.0f, .kd = 1.0f, .integral = 0.0f, .prev_err = 0.0f, .integral_limit = PID_INT_LIMIT};
 // 将本语句与#pragma section all restore语句之间的全局变量都放在CPU0的RAM中
 #pragma section all "cpu0_dsram"
 // 编码器配置
@@ -188,10 +135,6 @@ IFX_INTERRUPT(cc60_pit_ch0_isr, 0, CCU6_0_CH0_ISR_PRIORITY)
     WHEEL_SPEED_R = encoder_get_count(ENCODER_3) / 60;
     encoder_clear_count(ENCODER_1);
     encoder_clear_count(ENCODER_3);
-    uint32_t duty_left = pid_run(&pid_left, (float)TARGET_SPEED, (float)WHEEL_SPEED_L, (float)PWM_BASE_DUTY);
-    uint32_t duty_right = pid_run(&pid_right, (float)TARGET_SPEED, (float)WHEEL_SPEED_R, (float)PWM_BASE_DUTY);
-    pwm_set_duty(PWM_L, duty_left);
-    pwm_set_duty(PWM_R, duty_right);
 }
 
 /*这个中断函数用来点灯
