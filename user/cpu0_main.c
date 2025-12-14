@@ -70,6 +70,7 @@ int led_statu = 0; // 用于LED流水点亮
 #define KEY2 (P20_7)
 #define KEY3 (P11_2)
 #define KEY4 (P11_3)
+int16 binary_threshold = 100; // 二值化阈值
 
 int core0_main(void)
 {
@@ -82,7 +83,7 @@ int core0_main(void)
     ips114_clear();
     ips114_full(RGB565_WHITE);
     ips114_show_rgb565_image(0, 27, (const uint16_t *)gImage_seekfree_logo, 240, 80, 240, 80, 0);
-    system_delay_ms(800); // 显示逐飞logo 0.8秒
+    system_delay_ms(500); // 显示逐飞logo 0.5秒
     ips114_clear();
 
     // 初始化MT9V03X摄像头
@@ -115,12 +116,22 @@ int core0_main(void)
     gpio_init(KEY3, GPI, GPIO_HIGH, GPI_PULL_UP); // 初始化 KEY3 输入 默认高电平 上拉输入
     gpio_init(KEY4, GPI, GPIO_HIGH, GPI_PULL_UP); // 初始化 KEY4 输入 默认高电平 上拉输入
 
-    // 拿来测试的PIT定时器
-    pit_ms_init(CCU61_CH0, 20);
+    // 按键功能控制定时器
+    pit_ms_init(CCU61_CH0, 50);
 
     cpu_wait_event_ready(); // 等待所有核心初始化完毕<务必保留>
     while (TRUE)
     {
+        if (mt9v03x_finish_flag)
+        {
+            ips114_displayimage03x((const uint8 *)mt9v03x_image, MT9V03X_W, MT9V03X_H);                                                       // 显示原始图像
+            ips114_show_gray_image(MT9V03X_W, 0, (const uint8 *)mt9v03x_image, MT9V03X_W, MT9V03X_H, MT9V03X_W, MT9V03X_H, binary_threshold); // 显示灰度图像
+            ips114_show_int(0, 80, TARGET_SPEED, 3);                                                                                          // 显示目标速度
+            ips114_show_int(40, 80, WHEEL_SPEED_L, 5);                                                                                        // 显示左轮速度
+            ips114_show_int(80, 80, WHEEL_SPEED_R, 5);                                                                                        // 显示右轮速度
+            ips114_show_int(120, 80, binary_threshold, 3);                                                                                    // 显示二值化阈值
+            mt9v03x_finish_flag = 0;
+        }
     }
 }
 
@@ -171,14 +182,13 @@ IFX_INTERRUPT(cc61_pit_ch0_isr, 0, CCU6_1_CH0_ISR_PRIORITY)
 {
     interrupt_global_enable(0); // 开启中断嵌套
     pit_clear_flag(CCU61_CH0);
-    if (mt9v03x_finish_flag)
+    if (gpio_get_level(KEY1) == GPIO_LOW)
     {
-        ips114_displayimage03x((const uint8 *)mt9v03x_image, MT9V03X_W, MT9V03X_H);                                          // 显示原始图像
-        ips114_show_gray_image(MT9V03X_W, 0, (const uint8 *)mt9v03x_image, MT9V03X_W, MT9V03X_H, MT9V03X_W, MT9V03X_H, 100); // 显示灰度图像
-        ips114_show_int(0, 80, TARGET_SPEED, 3);                                                                             // 显示目标速度
-        ips114_show_int(40, 80, WHEEL_SPEED_L, 5);                                                                           // 显示左轮速度
-        ips114_show_int(80, 80, WHEEL_SPEED_R, 5);                                                                           // 显示右轮速度
-        mt9v03x_finish_flag = 0;
+        binary_threshold++;
+    }
+    if (gpio_get_level(KEY2) == GPIO_LOW)
+    {
+        binary_threshold--;
     }
 }
 
