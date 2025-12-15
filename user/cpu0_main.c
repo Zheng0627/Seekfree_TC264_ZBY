@@ -56,7 +56,7 @@
 #define ENCODER_3 (TIM4_ENCODER)
 #define ENCODER_3_A (TIM4_ENCODER_CH1_P02_8)
 #define ENCODER_3_B (TIM4_ENCODER_CH2_P00_9)
-int16 TARGET_SPEED = 21; // 目标速度 后续PID/LQR控制会用到
+int16 TARGET_SPEED = 7;  // 目标速度 后续PID/LQR控制会用到
 int16 WHEEL_SPEED_L = 0; // 左轮速度
 int16 WHEEL_SPEED_R = 0; // 右轮速度
 // 板载LED灯定义
@@ -70,7 +70,28 @@ int led_statu = 0; // 用于LED流水点亮
 #define KEY2 (P20_7)
 #define KEY3 (P11_2)
 #define KEY4 (P11_3)
-uint8 binary_threshold = 100; // 二值化阈值
+// mt9v03x摄像头相关定义
+uint8 binary_threshold = 100;             // 二值化阈值
+uint8 binary_image[MT9V03X_W][MT9V03X_H]; // 用于存放二值化图像的数组
+const uint8 *image_temp;                  // 用于临时存放图像行指针
+void image_to_binary(const uint8 *image, uint8 binary_threshold)
+{
+    for (uint32 i = 0; i < MT9V03X_H; i++)
+    {
+        image_temp = image + i * MT9V03X_W;
+        for (uint32 j = 0; j < MT9V03X_W; j++)
+        {
+            if (*(image_temp + j) > binary_threshold)
+            {
+                binary_image[j][i] = 1;
+            }
+            else
+            {
+                binary_image[j][i] = 0;
+            }
+        }
+    }
+}
 
 int core0_main(void)
 {
@@ -88,6 +109,8 @@ int core0_main(void)
 
     // 初始化MT9V03X摄像头
     mt9v03x_init();
+    uint16 binary_image[MT9V03X_W][MT9V03X_H]; // 用于存放二值化图像的数组
+    uint32 current_binary_line = 0;            // 当前正在处理的二值化图像行数
 
     // 初始化有刷电机驱动相关引脚和PWM
     gpio_init(DIR_R, GPO, GPIO_HIGH, GPO_PUSH_PULL); // GPIO 初始化为输出 默认上拉输出高
@@ -118,6 +141,8 @@ int core0_main(void)
 
     // 按键功能控制定时器
     pit_ms_init(CCU61_CH0, 50);
+    // UART3
+    pit_ms_init(CCU61_CH1, 3000);
 
     cpu_wait_event_ready(); // 等待所有核心初始化完毕<务必保留>
     while (TRUE)
@@ -189,6 +214,27 @@ IFX_INTERRUPT(cc61_pit_ch0_isr, 0, CCU6_1_CH0_ISR_PRIORITY)
         ips114_show_int(80, 80, WHEEL_SPEED_R, 5);                                                                                        // 显示右轮速度
         ips114_show_int(120, 80, binary_threshold, 3);                                                                                    // 显示二值化阈值
         mt9v03x_finish_flag = 0;
+        image_to_binary((const uint8 *)mt9v03x_image, binary_threshold); // 图像二值化处理
+    }
+}
+
+IFX_INTERRUPT(cc61_pit_ch1_isr, 0, CCU6_1_CH1_ISR_PRIORITY)
+{
+    interrupt_global_enable(0); // 开启中断嵌套
+    pit_clear_flag(CCU61_CH1);
+    printf("binary_image_data:\n");
+    for (uint16 current_binary_line = 0; current_binary_line < MT9V03X_H; current_binary_line++)
+    {
+        printf("line %d: ", current_binary_line);
+        for (uint32 j = 0; j < MT9V03X_W; j++)
+        {
+            printf("%d ", binary_image[j][current_binary_line]);
+        }
+        printf("\n");
+    }
+    for (uint16 i = 0; i < MT9V03X_W; i++)
+    {
+        /* code */
     }
 }
 
