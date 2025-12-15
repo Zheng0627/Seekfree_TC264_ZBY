@@ -166,7 +166,7 @@ int core0_main(void)
     // 按键功能控制定时器
     pit_ms_init(CCU61_CH0, 50);
     // UART3
-    pit_ms_init(CCU61_CH1, 3000);
+    pit_ms_init(CCU61_CH1, 1000);
 
     cpu_wait_event_ready(); // 等待所有核心初始化完毕<务必保留>
     while (TRUE)
