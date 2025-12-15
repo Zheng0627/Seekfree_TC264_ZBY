@@ -92,6 +92,30 @@ void image_to_binary(const uint8 *image, uint8 binary_threshold)
         }
     }
 }
+// 查找指定行中第一个与最后一个为1的位置，未找到则返回-1
+static void find_first_last_one_positions(uint16 row, int16 *first_pos, int16 *last_pos)
+{
+    int16 first = -1;
+    int16 last = -1;
+    if (row < MT9V03X_H)
+    {
+        for (uint16 j = 0; j < MT9V03X_W; j++)
+        {
+            if (binary_image[j][row])
+            {
+                if (first == -1)
+                {
+                    first = (int16)j;
+                }
+                last = (int16)j;
+            }
+        }
+    }
+    if (first_pos)
+        *first_pos = first;
+    if (last_pos)
+        *last_pos = last;
+}
 
 int core0_main(void)
 {
@@ -216,25 +240,36 @@ IFX_INTERRUPT(cc61_pit_ch0_isr, 0, CCU6_1_CH0_ISR_PRIORITY)
         mt9v03x_finish_flag = 0;
         image_to_binary((const uint8 *)mt9v03x_image, binary_threshold); // 图像二值化处理
     }
+    int16 first_pos = -1;
+    int16 last_pos = -1;
+    find_first_last_one_positions(59, &first_pos, &last_pos);
+    if (first_pos + (last_pos - first_pos) / 2)
+    {
+        TARGET_SPEED = 10;
+    }
 }
 
 IFX_INTERRUPT(cc61_pit_ch1_isr, 0, CCU6_1_CH1_ISR_PRIORITY)
 {
     interrupt_global_enable(0); // 开启中断嵌套
     pit_clear_flag(CCU61_CH1);
-    printf("binary_image_data:\n");
-    for (uint16 current_binary_line = 0; current_binary_line < MT9V03X_H; current_binary_line++)
+    // printf("binary_image_data:\n");
+    // for (uint16 current_binary_line = 0; current_binary_line < MT9V03X_H; current_binary_line++)
+    // {
+    //     printf("line %d: ", current_binary_line);
+    //     for (uint32 j = 0; j < MT9V03X_W; j++)
+    //     {
+    //         printf("%d ", binary_image[j][current_binary_line]);
+    //     }
+    //     printf("\n");
+    // }
+
+    // 计算并打印第59行（从0开始计数）的第一个和最后一个1的位置
     {
-        printf("line %d: ", current_binary_line);
-        for (uint32 j = 0; j < MT9V03X_W; j++)
-        {
-            printf("%d ", binary_image[j][current_binary_line]);
-        }
-        printf("\n");
-    }
-    for (uint16 i = 0; i < MT9V03X_W; i++)
-    {
-        /* code */
+        int16 first_pos = -1;
+        int16 last_pos = -1;
+        find_first_last_one_positions(59, &first_pos, &last_pos);
+        printf("row 59 first_1=%d, last_1=%d\n", first_pos, last_pos);
     }
 }
 
