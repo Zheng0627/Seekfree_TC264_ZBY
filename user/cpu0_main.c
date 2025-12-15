@@ -70,7 +70,7 @@ int led_statu = 0; // 用于LED流水点亮
 #define KEY2 (P20_7)
 #define KEY3 (P11_2)
 #define KEY4 (P11_3)
-int16 binary_threshold = 100; // 二值化阈值
+uint8 binary_threshold = 100; // 二值化阈值
 
 int core0_main(void)
 {
@@ -122,16 +122,6 @@ int core0_main(void)
     cpu_wait_event_ready(); // 等待所有核心初始化完毕<务必保留>
     while (TRUE)
     {
-        if (mt9v03x_finish_flag)
-        {
-            ips114_displayimage03x((const uint8 *)mt9v03x_image, MT9V03X_W, MT9V03X_H);                                                       // 显示原始图像
-            ips114_show_gray_image(MT9V03X_W, 0, (const uint8 *)mt9v03x_image, MT9V03X_W, MT9V03X_H, MT9V03X_W, MT9V03X_H, binary_threshold); // 显示灰度图像
-            ips114_show_int(0, 80, TARGET_SPEED, 3);                                                                                          // 显示目标速度
-            ips114_show_int(40, 80, WHEEL_SPEED_L, 5);                                                                                        // 显示左轮速度
-            ips114_show_int(80, 80, WHEEL_SPEED_R, 5);                                                                                        // 显示右轮速度
-            ips114_show_int(120, 80, binary_threshold, 3);                                                                                    // 显示二值化阈值
-            mt9v03x_finish_flag = 0;
-        }
     }
 }
 
@@ -182,13 +172,23 @@ IFX_INTERRUPT(cc61_pit_ch0_isr, 0, CCU6_1_CH0_ISR_PRIORITY)
 {
     interrupt_global_enable(0); // 开启中断嵌套
     pit_clear_flag(CCU61_CH0);
-    if (gpio_get_level(KEY1) == GPIO_LOW)
+    if (gpio_get_level(KEY3) == GPIO_LOW)
     {
         binary_threshold++;
     }
-    if (gpio_get_level(KEY2) == GPIO_LOW)
+    if (gpio_get_level(KEY4) == GPIO_LOW)
     {
         binary_threshold--;
+    }
+    if (mt9v03x_finish_flag)
+    {
+        ips114_displayimage03x((const uint8 *)mt9v03x_image, MT9V03X_W, MT9V03X_H);                                                       // 显示原始图像
+        ips114_show_gray_image(MT9V03X_W, 0, (const uint8 *)mt9v03x_image, MT9V03X_W, MT9V03X_H, MT9V03X_W, MT9V03X_H, binary_threshold); // 显示灰度图像
+        ips114_show_int(0, 80, TARGET_SPEED, 3);                                                                                          // 显示目标速度
+        ips114_show_int(40, 80, WHEEL_SPEED_L, 5);                                                                                        // 显示左轮速度
+        ips114_show_int(80, 80, WHEEL_SPEED_R, 5);                                                                                        // 显示右轮速度
+        ips114_show_int(120, 80, binary_threshold, 3);                                                                                    // 显示二值化阈值
+        mt9v03x_finish_flag = 0;
     }
 }
 

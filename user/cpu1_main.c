@@ -24,7 +24,7 @@
  * 文件名称          cpu1_main
  * 公司名称          成都逐飞科技有限公司
  * 版本信息          查看 libraries/doc 文件夹内 version 文件 版本说明
- * 开发环境          ADS v1.10.2
+ * 开发环境          ADS v1.9.4
  * 适用平台          TC264D
  * 店铺链接          https://seekfree.taobao.com/
  *
@@ -39,7 +39,10 @@
 
 // **************************** 代码区域 ****************************
 
-uint8_t i = 0;
+// 本例程是开源库空工程 可用作移植或者测试各类内外设
+// 本例程是开源库空工程 可用作移植或者测试各类内外设
+// 本例程是开源库空工程 可用作移植或者测试各类内外设
+
 void core1_main(void)
 {
     disable_Watchdog();         // 关闭看门狗
@@ -50,6 +53,9 @@ void core1_main(void)
     cpu_wait_event_ready(); // 等待所有核心初始化完毕
     while (TRUE)
     {
+        // 此处编写需要循环执行的代码
+
+        // 此处编写需要循环执行的代码
     }
 }
 #pragma section all restore

@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<launchConfiguration type="com.rt.hightec.agent.launcher.launchConfigurationType">
+    <stringAttribute key="ACC_HW" value="DAS JDS TriBoard TCXXX V3.5 TB4REX68"/>
+    <booleanAttribute key="ENABLE_AGENTLOG" value="false"/>
+    <booleanAttribute key="ENABLE_FLASHING" value="true"/>
+    <booleanAttribute key="ENABLE_STOPPING" value="true"/>
+    <stringAttribute key="EXECUTABLE_PATH" value="${workspace_loc}/Seekfree_TC264_ZBY/Debug/Seekfree_TC264_Opensource_Library.elf"/>
+    <stringAttribute key="STOP_FUNCTION" value="core0_main"/>
+    <stringAttribute key="SVD" value="C:/Infineon/AURIX-Studio-1.10.24/build_system/bundled-artefacts-repo/svd/tc26xbpd/1.0-1/device.svd"/>
+    <stringAttribute key="org.eclipse.cdt.launch.PROJECT_ATTR" value="Seekfree_TC264_ZBY"/>
+    <listAttribute key="org.eclipse.debug.core.MAPPED_RESOURCE_PATHS">
+        <listEntry value="/Seekfree_TC264_ZBY"/>
+    </listAttribute>
+    <listAttribute key="org.eclipse.debug.core.MAPPED_RESOURCE_TYPES">
+        <listEntry value="4"/>
+    </listAttribute>
+    <stringAttribute key="org.eclipse.debug.ui.ATTR_LOCATION" value="/Seekfree_TC264_ZBY/Seekfree_TC264_ZBY Debug.launch"/>
+    <stringAttribute key="org.eclipse.debug.ui.ATTR_PROJECT_NAME" value="Seekfree_TC264_ZBY"/>
+    <booleanAttribute key="org.eclipse.debug.ui.ATTR_SHARED" value="true"/>
+    <stringAttribute key="org.eclipse.tcf.debug.MemoryMap" value="[{&quot;FileName&quot;:&quot;C:/Users/Zheng/OneDrive/Desktop/Infineon/Seekfree_TC264_ZBY/Debug/Seekfree_TC264_Opensource_Library.elf&quot;,&quot;ID&quot;:&quot;/DAS JDS TriBoard TCXXX V3.5 TB4REX68/Core 0: CPU0 TriCore 1.6E&quot;,&quot;Flags&quot;:0,&quot;UUID&quot;:&quot;4213cd80-2282-46e7-a438-203ef3770c3d&quot;},{&quot;FileName&quot;:&quot;C:/Users/Zheng/OneDrive/Desktop/Infineon/Seekfree_TC264_ZBY/Debug/Seekfree_TC264_Opensource_Library.elf&quot;,&quot;ID&quot;:&quot;/DAS JDS TriBoard TCXXX V3.5 TB4REX68/Core 0: CPU0 TriCore 1.6E&quot;,&quot;Flags&quot;:0,&quot;UUID&quot;:&quot;5d7d295a-62b1-4c82-b369-d458828f57a9&quot;},{&quot;FileName&quot;:&quot;C:/Users/Zheng/OneDrive/Desktop/Infineon/Seekfree_TC264_ZBY/Debug/Seekfree_TC264_Opensource_Library.elf&quot;,&quot;ID&quot;:&quot;/DAS JDS TriBoard TCXXX V3.5 TB4REX68/Core 0: CPU0 TriCore 1.6E&quot;,&quot;Flags&quot;:0,&quot;UUID&quot;:&quot;0f8ec264-7361-43ee-a0f4-3f4d506d1d06&quot;},{&quot;FileName&quot;:&quot;C:/Users/Zheng/OneDrive/Desktop/Infineon/Seekfree_TC264_ZBY/Debug/Seekfree_TC264_Opensource_Library.elf&quot;,&quot;ID&quot;:&quot;/DAS JDS TriBoard TCXXX V3.5 TB4REX68/Core 1: CPU1 TriCore 1.6P&quot;,&quot;Flags&quot;:0,&quot;UUID&quot;:&quot;1a1eb9f3-4570-4761-86eb-b80972ea6544&quot;},{&quot;FileName&quot;:&quot;C:/Users/Zheng/OneDrive/Desktop/Infineon/Seekfree_TC264_ZBY/Debug/Seekfree_TC264_Opensource_Library.elf&quot;,&quot;ID&quot;:&quot;/DAS JDS TriBoard TCXXX V3.5 TB4REX68/Core 0: CPU0 TriCore 1.6E&quot;,&quot;Flags&quot;:0,&quot;UUID&quot;:&quot;f271c5c6-d155-434e-8f96-367ae1d06135&quot;},{&quot;FileName&quot;:&quot;C:/Users/Zheng/OneDrive/Desktop/Infineon/Seekfree_TC264_ZBY/Debug/Seekfree_TC264_Opensource_Library.elf&quot;,&quot;ID&quot;:&quot;/DAS JDS TriBoard TCXXX V3.5 TB4REX68/Core 1: CPU1 TriCore 1.6P&quot;,&quot;Flags&quot;:0,&quot;UUID&quot;:&quot;18d21914-ca02-40f4-bf77-5652e36d159a&quot;}]"/>
+    <stringAttribute key="org.eclipse.tcf.debug.PeerID" value="TCP:127.0.0.1:1534"/>
+    <stringAttribute key="org.eclipse.tcf.debug.ProjectName" value="Seekfree_TC264_ZBY"/>
+    <booleanAttribute key="org.eclipse.tcf.debug.RunLocalAgent" value="false"/>
+    <booleanAttribute key="org.eclipse.tcf.debug.RunLocalServer" value="false"/>
+    <booleanAttribute key="org.eclipse.tcf.debug.UseLocalAgent" value="false"/>
+    <stringAttribute key="org.eclipse.tcf.debug.executable_name" value="${workspace_loc}/Seekfree_TC264_ZBY/Debug/Seekfree_TC264_Opensource_Library.elf"/>
+    <stringAttribute key="sessionID" value="905b5e05-cf62-4d73-be7b-82b4e60791b2"/>
+</launchConfiguration>
