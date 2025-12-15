@@ -240,12 +240,22 @@ IFX_INTERRUPT(cc61_pit_ch0_isr, 0, CCU6_1_CH0_ISR_PRIORITY)
         mt9v03x_finish_flag = 0;
         image_to_binary((const uint8 *)mt9v03x_image, binary_threshold); // 图像二值化处理
     }
+    pwm_set_duty(PWM_R, PWM_BASE_DUTY);
+    pwm_set_duty(PWM_L, PWM_BASE_DUTY);
     int16 first_pos = -1;
     int16 last_pos = -1;
     find_first_last_one_positions(59, &first_pos, &last_pos);
-    if (first_pos + (last_pos - first_pos) / 2)
+    if (first_pos + (last_pos - first_pos) / 2 <= 40)
     {
-        TARGET_SPEED = 10;
+        pwm_set_duty(PWM_R, PWM_BASE_DUTY - 2 * PWM_DEFAULT_DUTY);
+        pwm_set_duty(PWM_L, PWM_BASE_DUTY);
+        system_delay_ms(5);
+    }
+    else
+    {
+        pwm_set_duty(PWM_L, PWM_BASE_DUTY - 2 * PWM_DEFAULT_DUTY);
+        pwm_set_duty(PWM_R, PWM_BASE_DUTY);
+        system_delay_ms(5);
     }
 }
 
