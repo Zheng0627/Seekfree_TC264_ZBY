@@ -1,12 +1,11 @@
 # 基于逐飞TC264开源库的21届智能车代码（修改中）🛵💨
-- ⚠️ 正经提醒：从 GitHub 拉完代码，立刻解压 `libraries/infineon_libraries.zip`，否则编译会当场翻脸报错
-- ⚠️ 正经提醒：请务必关闭WindowsDefender等杀毒软件对工程目录的实时保护，否则可能导致编译失败
-- （不知道为什么Git追踪不到这里面的文件，所以打包成了压缩包 :> ）
+- ⚠️ 郑重警告：完成git clone后立刻解压 `libraries/infineon_libraries.zip`
+- ⚠️ 郑重警告：请务必关闭WindowsDefender等杀毒软件对工程目录的实时保护，否则可能导致编译失败
 
 # 小贴士
 - 使用中断需要在 `user/isr.c`注释对应片段
 
-# 许可证与版权（认真脸）
+# 许可证与版权
 > TC264 Opensource Library（TC264 开源库）基于官方 SDK 接口的第三方开源库。
 > Copyright (c) 2022 SEEKFREE 逐飞科技
 >
