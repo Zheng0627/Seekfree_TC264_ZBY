@@ -173,20 +173,37 @@ int core0_main(void)
     {
         pwm_set_duty(PWM_R, PWM_BASE_DUTY + 0.8 * PWM_DEFAULT_DUTY);
         pwm_set_duty(PWM_L, PWM_BASE_DUTY);
-        int16 first_pos = -1;
-        int16 last_pos = -1;
-        find_first_last_one_positions(59, &first_pos, &last_pos);
-        if (first_pos + (last_pos - first_pos) / 2 > 42)
+        // Ö±ÏßÑ­¼£
+        int16 line_first_pos = -1;
+        int16 line_last_pos = -1;
+        find_first_last_one_positions(55, &line_first_pos, &line_last_pos);
+        if (line_first_pos + (line_last_pos - line_first_pos) / 2 > 42)
         {
             pwm_set_duty(PWM_R, 0);
             pwm_set_duty(PWM_L, PWM_BASE_DUTY);
             system_delay_ms(5);
         }
-        if (first_pos + (last_pos - first_pos) / 2 < 38)
+        if (line_first_pos + (line_last_pos - line_first_pos) / 2 < 38)
         {
             pwm_set_duty(PWM_L, 0);
             pwm_set_duty(PWM_R, PWM_BASE_DUTY + 0.8 * PWM_DEFAULT_DUTY);
             system_delay_ms(5);
+        }
+        // Ö±½Ç¹ÕÍä
+        int16 angel_first_pos = -1;
+        int16 angel_last_pos = -1;
+        find_first_last_one_positions(59, &angel_first_pos, &angel_last_pos);
+        if (angel_first_pos <= 10 && angel_last_pos <= 60)
+        {
+            pwm_set_duty(PWM_L, 0);
+            pwm_set_duty(PWM_R, PWM_BASE_DUTY + 0.8 * PWM_DEFAULT_DUTY);
+            system_delay_ms(100);
+        }
+        if (angel_first_pos >= 40 && angel_last_pos >= 60)
+        {
+            pwm_set_duty(PWM_R, 0);
+            pwm_set_duty(PWM_L, PWM_BASE_DUTY);
+            system_delay_ms(100);
         }
     }
 }
