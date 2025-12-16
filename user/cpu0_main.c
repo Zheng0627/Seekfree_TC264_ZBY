@@ -171,6 +171,23 @@ int core0_main(void)
     cpu_wait_event_ready(); // 等待所有核心初始化完毕<务必保留>
     while (TRUE)
     {
+        pwm_set_duty(PWM_R, PWM_BASE_DUTY + 0.8 * PWM_DEFAULT_DUTY);
+        pwm_set_duty(PWM_L, PWM_BASE_DUTY);
+        int16 first_pos = -1;
+        int16 last_pos = -1;
+        find_first_last_one_positions(59, &first_pos, &last_pos);
+        if (first_pos + (last_pos - first_pos) / 2 > 42)
+        {
+            pwm_set_duty(PWM_R, 0);
+            pwm_set_duty(PWM_L, PWM_BASE_DUTY);
+            system_delay_ms(5);
+        }
+        if (first_pos + (last_pos - first_pos) / 2 < 38)
+        {
+            pwm_set_duty(PWM_L, 0);
+            pwm_set_duty(PWM_R, PWM_BASE_DUTY + 0.8 * PWM_DEFAULT_DUTY);
+            system_delay_ms(5);
+        }
     }
 }
 
@@ -240,23 +257,6 @@ IFX_INTERRUPT(cc61_pit_ch0_isr, 0, CCU6_1_CH0_ISR_PRIORITY)
         mt9v03x_finish_flag = 0;
         image_to_binary((const uint8 *)mt9v03x_image, binary_threshold); // 图像二值化处理
     }
-    pwm_set_duty(PWM_R, PWM_BASE_DUTY);
-    pwm_set_duty(PWM_L, PWM_BASE_DUTY);
-    int16 first_pos = -1;
-    int16 last_pos = -1;
-    find_first_last_one_positions(59, &first_pos, &last_pos);
-    if (first_pos + (last_pos - first_pos) / 2 >= 40)
-    {
-        pwm_set_duty(PWM_R, 0);
-        pwm_set_duty(PWM_L, PWM_BASE_DUTY);
-        system_delay_ms(5);
-    }
-    else
-    {
-        pwm_set_duty(PWM_L, 0);
-        pwm_set_duty(PWM_R, PWM_BASE_DUTY);
-        system_delay_ms(5);
-    }
 }
 
 IFX_INTERRUPT(cc61_pit_ch1_isr, 0, CCU6_1_CH1_ISR_PRIORITY)
@@ -275,12 +275,12 @@ IFX_INTERRUPT(cc61_pit_ch1_isr, 0, CCU6_1_CH1_ISR_PRIORITY)
     // }
 
     // 计算并打印第59行（从0开始计数）的第一个和最后一个1的位置
-    {
-        int16 first_pos = -1;
-        int16 last_pos = -1;
-        find_first_last_one_positions(59, &first_pos, &last_pos);
-        printf("row 59 first_1=%d, last_1=%d\n", first_pos, last_pos);
-    }
+    // {
+    //     int16 first_pos = -1;
+    //     int16 last_pos = -1;
+    //     find_first_last_one_positions(59, &first_pos, &last_pos);
+    //     printf("row 59 first_1=%d, last_1=%d\n", first_pos, last_pos);
+    // }
 }
 
 #pragma section all restore
