@@ -197,13 +197,13 @@ int core0_main(void)
         {
             pwm_set_duty(PWM_L, 0);
             pwm_set_duty(PWM_R, PWM_BASE_DUTY + 0.8 * PWM_DEFAULT_DUTY);
-            system_delay_ms(100);
+            system_delay_ms(300);
         }
         if (angel_first_pos >= 40 && angel_last_pos >= 60)
         {
             pwm_set_duty(PWM_R, 0);
             pwm_set_duty(PWM_L, PWM_BASE_DUTY);
-            system_delay_ms(100);
+            system_delay_ms(300);
         }
     }
 }
