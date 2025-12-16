@@ -245,15 +245,15 @@ IFX_INTERRUPT(cc61_pit_ch0_isr, 0, CCU6_1_CH0_ISR_PRIORITY)
     int16 first_pos = -1;
     int16 last_pos = -1;
     find_first_last_one_positions(59, &first_pos, &last_pos);
-    if (first_pos + (last_pos - first_pos) / 2 <= 40)
+    if (first_pos + (last_pos - first_pos) / 2 >= 40)
     {
-        pwm_set_duty(PWM_R, PWM_BASE_DUTY - 2 * PWM_DEFAULT_DUTY);
+        pwm_set_duty(PWM_R, 0);
         pwm_set_duty(PWM_L, PWM_BASE_DUTY);
         system_delay_ms(5);
     }
     else
     {
-        pwm_set_duty(PWM_L, PWM_BASE_DUTY - 2 * PWM_DEFAULT_DUTY);
+        pwm_set_duty(PWM_L, 0);
         pwm_set_duty(PWM_R, PWM_BASE_DUTY);
         system_delay_ms(5);
     }
