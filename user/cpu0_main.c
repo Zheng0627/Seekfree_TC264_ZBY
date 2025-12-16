@@ -36,19 +36,22 @@
  ********************************************************************************************************************/
 #include "zf_common_headfile.h"
 #pragma section all "cpu0_dsram"
-// 将本语句与#pragma section all restore语句之间的全局变量都放在CPU0的RAM中
+// 全局变量存放处
+// 全局变量存放处
+#pragma section all "cpu0_dsram"
 
 // 有刷电机相关配置
 // 根据实际的电机连接情况更改L/R轮的DIR和PWM引脚定义
-#define PWM_DEFAULT_DUTY (100) // n乘这个数换算成常见的百分比占空比
-#define PWM_BASE_DUTY (6 * PWM_DEFAULT_DUTY)
-#define DIR_L (P02_4)
+#define PWM_DEFAULT_DUTY (100)               // n乘这个数换算成常见的百分比占空比
+#define PWM_BASE_DUTY (7 * PWM_DEFAULT_DUTY) // 基础占空比 太小了转不动 太大了会起飞
+#define DIR_L (P02_4)                        // 可以调换顺序 或者把线反着接
 #define PWM_L (ATOM0_CH5_P02_5)
 #define DIR_R (P02_6)
 #define PWM_R (ATOM0_CH7_P02_7)
+int16 TARGET_SPEED = 7;  // 目标速度 后续PID/LQR控制会用到
+int16 WHEEL_SPEED_L = 0; // 左轮速度
+int16 WHEEL_SPEED_R = 0; // 右轮速度
 
-// 将本语句与#pragma section all restore语句之间的全局变量都放在CPU0的RAM中
-#pragma section all "cpu0_dsram"
 // 编码器配置
 #define ENCODER_1 (TIM2_ENCODER)
 #define ENCODER_1_A (TIM2_ENCODER_CH1_P33_7)
@@ -56,20 +59,20 @@
 #define ENCODER_3 (TIM4_ENCODER)
 #define ENCODER_3_A (TIM4_ENCODER_CH1_P02_8)
 #define ENCODER_3_B (TIM4_ENCODER_CH2_P00_9)
-int16 TARGET_SPEED = 7;  // 目标速度 后续PID/LQR控制会用到
-int16 WHEEL_SPEED_L = 0; // 左轮速度
-int16 WHEEL_SPEED_R = 0; // 右轮速度
+
 // 板载LED灯定义
 #define LED1 (P20_9)
 #define LED2 (P20_8)
 #define LED3 (P21_5)
 #define LED4 (P21_4)
 int led_statu = 0; // 用于LED流水点亮
+
 // 板载KEY定义
 #define KEY1 (P20_6)
 #define KEY2 (P20_7)
 #define KEY3 (P11_2)
 #define KEY4 (P11_3)
+
 // mt9v03x摄像头相关定义
 uint8 binary_threshold = 100;             // 二值化阈值
 uint8 binary_image[MT9V03X_W][MT9V03X_H]; // 用于存放二值化图像的数组
@@ -120,15 +123,11 @@ static void find_first_last_one_positions(uint16 row, int16 *first_pos, int16 *l
 int core0_main(void)
 {
     clock_init(); // 获取时钟频率<务必保留>
-    debug_init(); // 初始化默认调试串口
+    debug_init(); // 初始化默认调试串口 UART3
 
     // 初始化IPS114液晶屏
     ips114_init();
     ips114_set_color(RGB565_WHITE, RGB565_BLACK); // 设置默认前景色和背景色
-    ips114_clear();
-    ips114_full(RGB565_WHITE);
-    ips114_show_rgb565_image(0, 27, (const uint16_t *)gImage_seekfree_logo, 240, 80, 240, 80, 0);
-    system_delay_ms(500); // 显示逐飞logo 0.5秒
     ips114_clear();
 
     // 初始化MT9V03X摄像头
@@ -171,40 +170,40 @@ int core0_main(void)
     cpu_wait_event_ready(); // 等待所有核心初始化完毕<务必保留>
     while (TRUE)
     {
-        pwm_set_duty(PWM_R, PWM_BASE_DUTY + 0.8 * PWM_DEFAULT_DUTY);
-        pwm_set_duty(PWM_L, PWM_BASE_DUTY);
-        // 直线循迹
-        int16 line_first_pos = -1;
-        int16 line_last_pos = -1;
-        find_first_last_one_positions(55, &line_first_pos, &line_last_pos);
-        if (line_first_pos + (line_last_pos - line_first_pos) / 2 > 42)
-        {
-            pwm_set_duty(PWM_R, 0);
-            pwm_set_duty(PWM_L, PWM_BASE_DUTY);
-            system_delay_ms(5);
-        }
-        if (line_first_pos + (line_last_pos - line_first_pos) / 2 < 38)
-        {
-            pwm_set_duty(PWM_L, 0);
-            pwm_set_duty(PWM_R, PWM_BASE_DUTY + 0.8 * PWM_DEFAULT_DUTY);
-            system_delay_ms(5);
-        }
-        // 直角拐弯
-        int16 angel_first_pos = -1;
-        int16 angel_last_pos = -1;
-        find_first_last_one_positions(59, &angel_first_pos, &angel_last_pos);
-        if (angel_first_pos <= 10 && angel_last_pos <= 60)
-        {
-            pwm_set_duty(PWM_L, 0);
-            pwm_set_duty(PWM_R, PWM_BASE_DUTY + 0.8 * PWM_DEFAULT_DUTY);
-            system_delay_ms(300);
-        }
-        if (angel_first_pos >= 40 && angel_last_pos >= 60)
-        {
-            pwm_set_duty(PWM_R, 0);
-            pwm_set_duty(PWM_L, PWM_BASE_DUTY);
-            system_delay_ms(300);
-        }
+        // pwm_set_duty(PWM_R, PWM_BASE_DUTY + 0.8 * PWM_DEFAULT_DUTY);
+        // pwm_set_duty(PWM_L, PWM_BASE_DUTY);
+        // // 直线循迹
+        // int16 line_first_pos = -1;
+        // int16 line_last_pos = -1;
+        // find_first_last_one_positions(55, &line_first_pos, &line_last_pos);
+        // if (line_first_pos + (line_last_pos - line_first_pos) / 2 > 42)
+        // {
+        //     pwm_set_duty(PWM_R, 0);
+        //     pwm_set_duty(PWM_L, PWM_BASE_DUTY);
+        //     system_delay_ms(5);
+        // }
+        // if (line_first_pos + (line_last_pos - line_first_pos) / 2 < 38)
+        // {
+        //     pwm_set_duty(PWM_L, 0);
+        //     pwm_set_duty(PWM_R, PWM_BASE_DUTY + 0.8 * PWM_DEFAULT_DUTY);
+        //     system_delay_ms(5);
+        // }
+        // // 直角拐弯
+        // int16 angel_first_pos = -1;
+        // int16 angel_last_pos = -1;
+        // find_first_last_one_positions(58, &angel_first_pos, &angel_last_pos);
+        // if (angel_first_pos <= 10 && angel_last_pos <= 70)
+        // {
+        //     pwm_set_duty(PWM_R, 0);
+        //     pwm_set_duty(PWM_L, PWM_BASE_DUTY);
+        //     system_delay_ms(1000);
+        // }
+        // if (angel_first_pos >= 40 && angel_last_pos >= 60)
+        // {
+        //     pwm_set_duty(PWM_L, 0);
+        //     pwm_set_duty(PWM_R, PWM_BASE_DUTY + 0.8 * PWM_DEFAULT_DUTY);
+        //     system_delay_ms(1000);
+        // }
     }
 }
 
@@ -265,12 +264,20 @@ IFX_INTERRUPT(cc61_pit_ch0_isr, 0, CCU6_1_CH0_ISR_PRIORITY)
     }
     if (mt9v03x_finish_flag)
     {
-        ips114_displayimage03x((const uint8 *)mt9v03x_image, MT9V03X_W, MT9V03X_H);                                                       // 显示原始图像
-        ips114_show_gray_image(MT9V03X_W, 0, (const uint8 *)mt9v03x_image, MT9V03X_W, MT9V03X_H, MT9V03X_W, MT9V03X_H, binary_threshold); // 显示灰度图像
-        ips114_show_int(0, 80, TARGET_SPEED, 3);                                                                                          // 显示目标速度
-        ips114_show_int(40, 80, WHEEL_SPEED_L, 5);                                                                                        // 显示左轮速度
-        ips114_show_int(80, 80, WHEEL_SPEED_R, 5);                                                                                        // 显示右轮速度
-        ips114_show_int(120, 80, binary_threshold, 3);                                                                                    // 显示二值化阈值
+        // ips114_displayimage03x((const uint8 *)mt9v03x_image, MT9V03X_W, MT9V03X_H);                                                       // 显示原始图像
+        // ips114_clear();
+        ips114_show_gray_image(0, 0, (const uint8 *)mt9v03x_image, MT9V03X_W, MT9V03X_H, MT9V03X_W / 2, MT9V03X_H / 2, 0);
+        ips114_show_gray_image(MT9V03X_W / 2, 0, (const uint8 *)mt9v03x_image, MT9V03X_W, MT9V03X_H, MT9V03X_W / 2, MT9V03X_H / 2, binary_threshold); // 显示灰度图像(缩小到原图面积1/4)
+        char speed_info_line_str[48];
+        sprintf(speed_info_line_str, "SPEED T:%d L:%d R:%d   ", (int)TARGET_SPEED, (int)WHEEL_SPEED_L, (int)WHEEL_SPEED_R);
+        ips114_show_string(0, 60, speed_info_line_str);
+        char image_info_line_str[48];
+        sprintf(image_info_line_str, "IMAGE B:%d F:%d   ", (int)binary_threshold, (int)MT9V03X_FPS_DEF);
+        ips114_show_string(0, 80, image_info_line_str);
+        // ips114_show_int(0, 130, TARGET_SPEED, 3);                                                                                 // 显示目标速度
+        // ips114_show_int(40, 130, WHEEL_SPEED_L, 5);                                                                               // 显示左轮速度
+        // ips114_show_int(80, 130, WHEEL_SPEED_R, 5);                                                                               // 显示右轮速度
+        // ips114_show_int(120, 130, binary_threshold, 3);                                                                           // 显示二值化阈值
         mt9v03x_finish_flag = 0;
         image_to_binary((const uint8 *)mt9v03x_image, binary_threshold); // 图像二值化处理
     }
