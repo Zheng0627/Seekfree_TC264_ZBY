@@ -1,6 +1,11 @@
 # 基于逐飞TC264开源库的21届智能车代码（修改中）🛵💨
-- ⚠️ 郑重警告：完成git clone后立刻解压 `libraries/infineon_libraries.zip`
-- ⚠️ 郑重警告：请务必关闭WindowsDefender等杀毒软件对工程目录的实时保护，否则可能导致编译失败
+## ⚠️ 郑重警告：完成git clone后立刻解压 `libraries/infineon_libraries.zip`
+## ⚠️ 郑重警告：请务必关闭WindowsDefender等杀毒软件对工程目录的实时保护，否则可能导致编译失败
+
+# 分支说明
+- `master`：主分支 包含PID/LQR等功能的完整代码（等待首版发布）
+- `PTC-noPID`：基于逐飞MT9V034总钻风摄像头的光电循迹验证代码 无PID控制（正在开发）
+- `PTC`：基于逐飞MT9V034总钻风摄像头的光电循迹验证代码 含PID/LQR控制算法（待开发）
 
 # 小贴士
 - 使用中断需要在 `user/isr.c`注释对应片段
