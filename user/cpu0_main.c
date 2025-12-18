@@ -47,7 +47,7 @@ int16 center_line_avg = 0;             // 直线循迹模式下车道中心线平均位置
 // 有刷电机相关配置
 // 根据实际的电机连接情况更改L/R轮的DIR和PWM引脚定义
 #define PWM_DEFAULT_DUTY (100)               // n乘这个数换算成常见的百分比占空比
-#define PWM_BASE_DUTY (7 * PWM_DEFAULT_DUTY) // 基础占空比 太小了转不动 太大了会起飞
+#define PWM_BASE_DUTY (10 * PWM_DEFAULT_DUTY) // 基础占空比 太小了转不动 太大了会起飞
 #define DIR_L (P02_4)                        // 可以调换顺序 或者把线反着接
 #define PWM_L (ATOM0_CH5_P02_5)
 #define DIR_R (P02_6)
@@ -186,7 +186,7 @@ int core0_main(void)
 
     while (TRUE)
     {
-        if (row_change_point_count(40) == 2 && row_change_point_count(100) == 2 && line_change_point_count(54) == 0 && line_change_point_count(134) == 0 && car_go == 1) // 直线循迹模式
+        if (row_change_point_count(40) >= 2 && line_change_point_count(54) == 0 && line_change_point_count(134) == 0 && car_go == 1) // 直线循迹模式
         {
             uint8 center_line[CENTER_LINE_LEN];
             for (uint8 i = 40; i < 100; i++)
