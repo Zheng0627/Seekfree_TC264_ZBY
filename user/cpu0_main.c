@@ -37,7 +37,10 @@
 #include "zf_common_headfile.h"
 #pragma section all "cpu0_dsram"
 // 全局变量存放处
-int car_go = 0; // 0:停止 1:发车
+int car_go = 0;                        // 0:停止 1:发车
+int16 center_line_avg = 0;             // 直线循迹模式下车道中心线平均位置
+#define CENTER_LINE_LEN (60)           // 中心线长度（像素点个数）
+#define CENTER_LINE_OUTLIER_THRESH (5) // 像素距离超过该阈值视为离群
 // 全局变量存放处
 #pragma section all "cpu0_dsram"
 
@@ -147,7 +150,7 @@ int core0_main(void)
 
     // 初始化MT9V03X摄像头
     mt9v03x_init();
-    uint16 binary_image[MT9V03X_W][MT9V03X_H]; // 用于存放二值化图像的数组
+    /* 使用全局的 binary_image 数组 */
 
     // 初始化有刷电机驱动相关引脚和PWM
     gpio_init(DIR_R, GPO, GPIO_HIGH, GPO_PUSH_PULL); // GPIO 初始化为输出 默认上拉输出高
@@ -155,9 +158,7 @@ int core0_main(void)
     gpio_init(DIR_L, GPO, GPIO_HIGH, GPO_PUSH_PULL); // GPIO 初始化为输出 默认上拉输出高
     pwm_init(PWM_L, 17000, 0);                       // PWM 通道初始化频率 17KHz 占空比初始为 0
     gpio_set_level(DIR_R, GPIO_HIGH);                // 右轮正转
-    pwm_set_duty(PWM_R, PWM_BASE_DUTY);              // 右轮初始占空比
     gpio_set_level(DIR_L, GPIO_HIGH);                // 左轮正转
-    pwm_set_duty(PWM_L, PWM_BASE_DUTY);              // 左轮初始占空比
     // 初始化编码器
     encoder_dir_init(ENCODER_1, ENCODER_1_A, ENCODER_1_B); // 编码器1初始化
     encoder_dir_init(ENCODER_3, ENCODER_3_A, ENCODER_3_B); // 编码器3初始化
@@ -182,10 +183,12 @@ int core0_main(void)
     pit_ms_init(CCU61_CH1, 1000);
 
     cpu_wait_event_ready(); // 等待所有核心初始化完毕<务必保留>
+
     while (TRUE)
     {
-        if (row_change_point_count(40) == 2 && row_change_point_count(100) == 2)
+        if (row_change_point_count(40) == 2 && row_change_point_count(100) == 2 && line_change_point_count(54) == 0 && line_change_point_count(134) == 0 && car_go == 1) // 直线循迹模式
         {
+            uint8 center_line[CENTER_LINE_LEN];
             for (uint8 i = 40; i < 100; i++)
             {
                 uint8 line_first_pos = 0;
@@ -206,9 +209,95 @@ int core0_main(void)
                         break;
                     }
                 }
+                center_line[i - 40] = (line_first_pos + line_last_pos) / 2;
+            }
+
+            // 一次均值+剔除离群，再求均值
+            int32 sum_raw = 0;
+            for (uint8 idx = 0; idx < CENTER_LINE_LEN; idx++)
+            {
+                sum_raw += center_line[idx];
+            }
+            int16 mean_raw = (int16)(sum_raw / CENTER_LINE_LEN);
+
+            int32 filtered_sum = 0;
+            uint8 filtered_count = 0;
+            for (uint8 idx = 0; idx < CENTER_LINE_LEN; idx++)
+            {
+                int16 diff = center_line[idx] - mean_raw;
+                if (diff < 0)
+                {
+                    diff = -diff;
+                }
+                if (diff <= CENTER_LINE_OUTLIER_THRESH)
+                {
+                    filtered_sum += center_line[idx];
+                    filtered_count++;
+                }
+            }
+
+            if (filtered_count > 0)
+            {
+                center_line_avg = (int16)(filtered_sum / filtered_count);
+            }
+            else
+            {
+                center_line_avg = mean_raw; // 极端情况：全部被判离群，回退到初始均值
+            }
+
+            if (center_line_avg >= 96)
+            {
+                pwm_set_duty(PWM_L, PWM_BASE_DUTY);
+                pwm_set_duty(PWM_R, 0);
+            }
+            else if (center_line_avg <= 92)
+            {
+                pwm_set_duty(PWM_L, 0);
+                pwm_set_duty(PWM_R, PWM_BASE_DUTY);
+            }
+            else
+            {
+                pwm_set_duty(PWM_L, PWM_BASE_DUTY);
+                pwm_set_duty(PWM_R, PWM_BASE_DUTY);
+            }
+        }
+        if (row_change_point_count(40) == 0 && row_change_point_count(100) == 2 && line_change_point_count(54) == 2 && line_change_point_count(134) == 0 && car_go == 1) // 左转弯
+        {
+            pwm_set_duty(PWM_L, 0);
+            pwm_set_duty(PWM_R, PWM_BASE_DUTY);
+            while (1)
+            {
+                if (row_change_point_count(40) == 2)
+                {
+                    break;
+                }
+                else
+                {
+                    pwm_set_duty(PWM_L, 0);
+                    pwm_set_duty(PWM_R, PWM_BASE_DUTY);
+                }
+            }
+        }
+        if (row_change_point_count(40) == 0 && row_change_point_count(100) == 2 && line_change_point_count(54) == 0 && line_change_point_count(134) == 2 && car_go == 1) // 右转弯
+        {
+            pwm_set_duty(PWM_L, PWM_BASE_DUTY);
+            pwm_set_duty(PWM_R, 0);
+            while (1)
+            {
+                if (row_change_point_count(40) == 2)
+                {
+                    break;
+                }
+                else
+                {
+                    pwm_set_duty(PWM_L, PWM_BASE_DUTY);
+                    pwm_set_duty(PWM_R, 0);
+                }
             }
         }
     }
+
+    // return 0;
 }
 
 /*这个中断函数用来计算轮速
@@ -272,37 +361,14 @@ IFX_INTERRUPT(cc61_pit_ch0_isr, 0, CCU6_1_CH0_ISR_PRIORITY)
         car_go = 1; // 发车
     }
 
-    if (mt9v03x_finish_flag && car_go == 0)
+    if (mt9v03x_finish_flag)
     {
         ips114_show_gray_image(0, 0, (const uint8 *)mt9v03x_image, MT9V03X_W, MT9V03X_H, MT9V03X_W, MT9V03X_H, binary_threshold); // 显示灰度图像
         ips114_draw_line(54, 40, 134, 40, RGB565_RED);
         ips114_draw_line(134, 40, 134, 100, RGB565_RED);
         ips114_draw_line(54, 100, 134, 100, RGB565_RED);
         ips114_draw_line(54, 40, 54, 100, RGB565_RED);
-        for (uint8 i = 40; i < 100; i++)
-        {
-            uint8 line_first_pos = 0;
-            uint8 line_last_pos = 0;
-            for (uint8 j = 54; j < 134; j++)
-            {
-                if (binary_image[j][i])
-                {
-                    line_first_pos = j;
-                    break;
-                }
-            }
-            for (int j = 134; j >= 54; j--)
-            {
-                if (binary_image[j][i])
-                {
-                    line_last_pos = j;
-                    break;
-                }
-            }
-            ips114_draw_point((uint16)(line_first_pos), (uint16)(i), RGB565_GREEN);
-            ips114_draw_point((uint16)(line_last_pos), (uint16)(i), RGB565_GREEN);
-            ips114_draw_point((uint16)((line_first_pos + line_last_pos) / 2), (uint16)(i), RGB565_BLUE);
-        }
+        ips114_draw_line(center_line_avg, 40, center_line_avg, 100, RGB565_GREEN);
         mt9v03x_finish_flag = 0;
     }
 }
