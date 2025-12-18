@@ -37,6 +37,7 @@
 #include "zf_common_headfile.h"
 #pragma section all "cpu0_dsram"
 // 全局变量存放处
+int car_go = 0; // 0:停止 1:发车
 // 全局变量存放处
 #pragma section all "cpu0_dsram"
 
@@ -95,6 +96,44 @@ void image_to_binary(const uint8 *image, uint8 binary_threshold)
         }
     }
 }
+int row_change_point_count(uint8 row)
+{
+    int count = 0;
+    for (uint32 j = 54; j < 134; j++)
+    {
+        if (binary_image[j][row] != binary_image[j - 1][row])
+        {
+            // Skip isolated single-pixel flips (noise) where neighbors stay the same
+            if (j + 1 < MT9V03X_W &&
+                binary_image[j + 1][row] == binary_image[j - 1][row] &&
+                binary_image[j][row] != binary_image[j + 1][row])
+            {
+                continue;
+            }
+            count++;
+        }
+    }
+    return count;
+}
+int line_change_point_count(uint8 line)
+{
+    int count = 0;
+    for (uint32 i = 40; i < 100; i++)
+    {
+        if (binary_image[line][i] != binary_image[line][i - 1])
+        {
+            // Skip isolated single-pixel flips (noise) where neighbors stay the same
+            if (i + 1 < MT9V03X_H &&
+                binary_image[line][i + 1] == binary_image[line][i - 1] &&
+                binary_image[line][i] != binary_image[line][i + 1])
+            {
+                continue;
+            }
+            count++;
+        }
+    }
+    return count;
+}
 
 int core0_main(void)
 {
@@ -145,6 +184,30 @@ int core0_main(void)
     cpu_wait_event_ready(); // 等待所有核心初始化完毕<务必保留>
     while (TRUE)
     {
+        if (row_change_point_count(40) == 2 && row_change_point_count(100) == 2)
+        {
+            for (uint8 i = 40; i < 100; i++)
+            {
+                uint8 line_first_pos = 0;
+                uint8 line_last_pos = 0;
+                for (uint8 j = 54; j < 134; j++)
+                {
+                    if (binary_image[j][i])
+                    {
+                        line_first_pos = j;
+                        break;
+                    }
+                }
+                for (int j = 134; j >= 54; j--)
+                {
+                    if (binary_image[j][i])
+                    {
+                        line_last_pos = j;
+                        break;
+                    }
+                }
+            }
+        }
     }
 }
 
@@ -204,7 +267,12 @@ IFX_INTERRUPT(cc61_pit_ch0_isr, 0, CCU6_1_CH0_ISR_PRIORITY)
     {
         binary_threshold--;
     }
-    if (mt9v03x_finish_flag)
+    if (gpio_get_level(KEY1) == GPIO_LOW)
+    {
+        car_go = 1; // 发车
+    }
+
+    if (mt9v03x_finish_flag && car_go == 0)
     {
         ips114_show_gray_image(0, 0, (const uint8 *)mt9v03x_image, MT9V03X_W, MT9V03X_H, MT9V03X_W, MT9V03X_H, binary_threshold); // 显示灰度图像
         ips114_draw_line(54, 40, 134, 40, RGB565_RED);
