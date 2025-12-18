@@ -95,30 +95,6 @@ void image_to_binary(const uint8 *image, uint8 binary_threshold)
         }
     }
 }
-// 查找指定行中第一个与最后一个为1的位置，未找到则返回-1
-static void find_first_last_one_positions(uint16 row, int16 *first_pos, int16 *last_pos)
-{
-    int16 first = -1;
-    int16 last = -1;
-    if (row < MT9V03X_H)
-    {
-        for (uint16 j = 0; j < MT9V03X_W; j++)
-        {
-            if (binary_image[j][row])
-            {
-                if (first == -1)
-                {
-                    first = (int16)j;
-                }
-                last = (int16)j;
-            }
-        }
-    }
-    if (first_pos)
-        *first_pos = first;
-    if (last_pos)
-        *last_pos = last;
-}
 
 int core0_main(void)
 {
@@ -133,7 +109,6 @@ int core0_main(void)
     // 初始化MT9V03X摄像头
     mt9v03x_init();
     uint16 binary_image[MT9V03X_W][MT9V03X_H]; // 用于存放二值化图像的数组
-    uint32 current_binary_line = 0;            // 当前正在处理的二值化图像行数
 
     // 初始化有刷电机驱动相关引脚和PWM
     gpio_init(DIR_R, GPO, GPIO_HIGH, GPO_PUSH_PULL); // GPIO 初始化为输出 默认上拉输出高
@@ -147,14 +122,14 @@ int core0_main(void)
     // 初始化编码器
     encoder_dir_init(ENCODER_1, ENCODER_1_A, ENCODER_1_B); // 编码器1初始化
     encoder_dir_init(ENCODER_3, ENCODER_3_A, ENCODER_3_B); // 编码器3初始化
-    pit_ms_init(CCU60_CH0, 60);                            // PIT定时器中断 用于计算轮速
+    pit_ms_init(CCU60_CH0, 30);                            // PIT定时器中断 用于计算轮速
 
     // 初始化板载LED灯 低电平点亮
     gpio_init(LED1, GPO, GPIO_LOW, GPO_PUSH_PULL); // 初始化 LED1 输出 默认低电平 推挽输出模式
     gpio_init(LED2, GPO, GPIO_LOW, GPO_PUSH_PULL); // 初始化 LED2 输出 默认低电平 推挽输出模式
     gpio_init(LED3, GPO, GPIO_LOW, GPO_PUSH_PULL); // 初始化 LED3 输出 默认低电平 推挽输出模式
     gpio_init(LED4, GPO, GPIO_LOW, GPO_PUSH_PULL); // 初始化 LED4 输出 默认低电平 推挽输出模式
-    pit_ms_init(CCU60_CH1, 110);                   // PIT定时器中断 用于流水点灯 但是没啥卵用
+    //pit_ms_init(CCU60_CH1, 110);                   // PIT定时器中断 用于流水点灯 但是没啥卵用
 
     // 初始化板载KEY
     gpio_init(KEY1, GPI, GPIO_HIGH, GPI_PULL_UP); // 初始化 KEY1 输入 默认高电平 上拉输入
@@ -170,85 +145,52 @@ int core0_main(void)
     cpu_wait_event_ready(); // 等待所有核心初始化完毕<务必保留>
     while (TRUE)
     {
-        // pwm_set_duty(PWM_R, PWM_BASE_DUTY + 0.8 * PWM_DEFAULT_DUTY);
-        // pwm_set_duty(PWM_L, PWM_BASE_DUTY);
-        // // 直线循迹
-        // int16 line_first_pos = -1;
-        // int16 line_last_pos = -1;
-        // find_first_last_one_positions(55, &line_first_pos, &line_last_pos);
-        // if (line_first_pos + (line_last_pos - line_first_pos) / 2 > 42)
-        // {
-        //     pwm_set_duty(PWM_R, 0);
-        //     pwm_set_duty(PWM_L, PWM_BASE_DUTY);
-        //     system_delay_ms(5);
-        // }
-        // if (line_first_pos + (line_last_pos - line_first_pos) / 2 < 38)
-        // {
-        //     pwm_set_duty(PWM_L, 0);
-        //     pwm_set_duty(PWM_R, PWM_BASE_DUTY + 0.8 * PWM_DEFAULT_DUTY);
-        //     system_delay_ms(5);
-        // }
-        // // 直角拐弯
-        // int16 angel_first_pos = -1;
-        // int16 angel_last_pos = -1;
-        // find_first_last_one_positions(58, &angel_first_pos, &angel_last_pos);
-        // if (angel_first_pos <= 10 && angel_last_pos <= 70)
-        // {
-        //     pwm_set_duty(PWM_R, 0);
-        //     pwm_set_duty(PWM_L, PWM_BASE_DUTY);
-        //     system_delay_ms(1000);
-        // }
-        // if (angel_first_pos >= 40 && angel_last_pos >= 60)
-        // {
-        //     pwm_set_duty(PWM_L, 0);
-        //     pwm_set_duty(PWM_R, PWM_BASE_DUTY + 0.8 * PWM_DEFAULT_DUTY);
-        //     system_delay_ms(1000);
-        // }
     }
 }
 
 /*这个中断函数用来计算轮速
-每60ms进入一次中断
+        每30ms进入一次中断
 */
 IFX_INTERRUPT(cc60_pit_ch0_isr, 0, CCU6_0_CH0_ISR_PRIORITY)
 {
     interrupt_global_enable(0); // 开启中断嵌套
     pit_clear_flag(CCU60_CH0);
-    WHEEL_SPEED_L = -1 * encoder_get_count(ENCODER_1) / 60;
-    WHEEL_SPEED_R = encoder_get_count(ENCODER_3) / 60;
+    WHEEL_SPEED_L = -1 * encoder_get_count(ENCODER_1) / 30;
+    WHEEL_SPEED_R = encoder_get_count(ENCODER_3) / 30;
     encoder_clear_count(ENCODER_1);
     encoder_clear_count(ENCODER_3);
+    image_to_binary((const uint8 *)mt9v03x_image, binary_threshold);
 }
 
 /*这个中断函数用来点灯
 不知道有什么用 但是很爽:>
 */
-IFX_INTERRUPT(cc60_pit_ch1_isr, 0, CCU6_0_CH1_ISR_PRIORITY)
-{
-    interrupt_global_enable(0); // 开启中断嵌套
-    pit_clear_flag(CCU60_CH1);
-    led_statu++;
-    if (led_statu == 1)
-    {
-        gpio_toggle_level(LED1);
-    }
-    else if (led_statu == 2)
-    {
-        gpio_toggle_level(LED2);
-    }
-    else if (led_statu == 3)
-    {
-        gpio_toggle_level(LED3);
-    }
-    else if (led_statu == 4)
-    {
-        gpio_toggle_level(LED4);
-    }
-    else if (led_statu == 5)
-    {
-        led_statu = 0;
-    }
-}
+// IFX_INTERRUPT(cc60_pit_ch1_isr, 0, CCU6_0_CH1_ISR_PRIORITY)
+// {
+//     interrupt_global_enable(0); // 开启中断嵌套
+//     pit_clear_flag(CCU60_CH1);
+//     led_statu++;
+//     if (led_statu == 1)
+//     {
+//         gpio_toggle_level(LED1);
+//     }
+//     else if (led_statu == 2)
+//     {
+//         gpio_toggle_level(LED2);
+//     }
+//     else if (led_statu == 3)
+//     {
+//         gpio_toggle_level(LED3);
+//     }
+//     else if (led_statu == 4)
+//     {
+//         gpio_toggle_level(LED4);
+//     }
+//     else if (led_statu == 5)
+//     {
+//         led_statu = 0;
+//     }
+// }
 
 IFX_INTERRUPT(cc61_pit_ch0_isr, 0, CCU6_1_CH0_ISR_PRIORITY)
 {
@@ -265,7 +207,7 @@ IFX_INTERRUPT(cc61_pit_ch0_isr, 0, CCU6_1_CH0_ISR_PRIORITY)
     if (mt9v03x_finish_flag)
     {
         ips114_show_gray_image(0, 0, (const uint8 *)mt9v03x_image, MT9V03X_W, MT9V03X_H, MT9V03X_W, MT9V03X_H, binary_threshold); // 显示灰度图像(缩小到原图面积1/4)
-        image_to_binary((const uint8 *)mt9v03x_image, binary_threshold);                                                          // 图像二值化处理
+                                                                                                                                  // 图像二值化处理
         ips114_draw_line(34, 30, 154, 30, RGB565_RED);
         ips114_draw_line(154, 30, 154, 90, RGB565_RED);
         ips114_draw_line(34, 90, 154, 90, RGB565_RED);
