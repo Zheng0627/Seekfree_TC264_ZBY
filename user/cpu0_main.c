@@ -129,7 +129,7 @@ int core0_main(void)
     gpio_init(LED2, GPO, GPIO_LOW, GPO_PUSH_PULL); // 初始化 LED2 输出 默认低电平 推挽输出模式
     gpio_init(LED3, GPO, GPIO_LOW, GPO_PUSH_PULL); // 初始化 LED3 输出 默认低电平 推挽输出模式
     gpio_init(LED4, GPO, GPIO_LOW, GPO_PUSH_PULL); // 初始化 LED4 输出 默认低电平 推挽输出模式
-    //pit_ms_init(CCU60_CH1, 110);                   // PIT定时器中断 用于流水点灯 但是没啥卵用
+    // pit_ms_init(CCU60_CH1, 110);                   // PIT定时器中断 用于流水点灯 但是没啥卵用
 
     // 初始化板载KEY
     gpio_init(KEY1, GPI, GPIO_HIGH, GPI_PULL_UP); // 初始化 KEY1 输入 默认高电平 上拉输入
@@ -149,7 +149,7 @@ int core0_main(void)
 }
 
 /*这个中断函数用来计算轮速
-        每30ms进入一次中断
+每30ms进入一次中断
 */
 IFX_INTERRUPT(cc60_pit_ch0_isr, 0, CCU6_0_CH0_ISR_PRIORITY)
 {
@@ -206,17 +206,16 @@ IFX_INTERRUPT(cc61_pit_ch0_isr, 0, CCU6_1_CH0_ISR_PRIORITY)
     }
     if (mt9v03x_finish_flag)
     {
-        ips114_show_gray_image(0, 0, (const uint8 *)mt9v03x_image, MT9V03X_W, MT9V03X_H, MT9V03X_W, MT9V03X_H, binary_threshold); // 显示灰度图像(缩小到原图面积1/4)
-                                                                                                                                  // 图像二值化处理
-        ips114_draw_line(34, 30, 154, 30, RGB565_RED);
-        ips114_draw_line(154, 30, 154, 90, RGB565_RED);
-        ips114_draw_line(34, 90, 154, 90, RGB565_RED);
-        ips114_draw_line(34, 30, 34, 90, RGB565_RED);
-        for (uint8 i = 30; i < 90; i++)
+        ips114_show_gray_image(0, 0, (const uint8 *)mt9v03x_image, MT9V03X_W, MT9V03X_H, MT9V03X_W, MT9V03X_H, binary_threshold); // 显示灰度图像
+        ips114_draw_line(54, 40, 134, 40, RGB565_RED);
+        ips114_draw_line(134, 40, 134, 100, RGB565_RED);
+        ips114_draw_line(54, 100, 134, 100, RGB565_RED);
+        ips114_draw_line(54, 40, 54, 100, RGB565_RED);
+        for (uint8 i = 40; i < 100; i++)
         {
             uint8 line_first_pos = 0;
             uint8 line_last_pos = 0;
-            for (uint8 j = 34; j < 154; j++)
+            for (uint8 j = 54; j < 134; j++)
             {
                 if (binary_image[j][i])
                 {
@@ -224,7 +223,7 @@ IFX_INTERRUPT(cc61_pit_ch0_isr, 0, CCU6_1_CH0_ISR_PRIORITY)
                     break;
                 }
             }
-            for (int j = 154; j >= 34; j--)
+            for (int j = 134; j >= 54; j--)
             {
                 if (binary_image[j][i])
                 {
