@@ -264,22 +264,37 @@ IFX_INTERRUPT(cc61_pit_ch0_isr, 0, CCU6_1_CH0_ISR_PRIORITY)
     }
     if (mt9v03x_finish_flag)
     {
-        // ips114_displayimage03x((const uint8 *)mt9v03x_image, MT9V03X_W, MT9V03X_H);                                                       // 显示原始图像
-        // ips114_clear();
-        ips114_show_gray_image(0, 0, (const uint8 *)mt9v03x_image, MT9V03X_W, MT9V03X_H, MT9V03X_W / 2, MT9V03X_H / 2, 0);
-        ips114_show_gray_image(MT9V03X_W / 2, 0, (const uint8 *)mt9v03x_image, MT9V03X_W, MT9V03X_H, MT9V03X_W / 2, MT9V03X_H / 2, binary_threshold); // 显示灰度图像(缩小到原图面积1/4)
-        char speed_info_line_str[48];
-        sprintf(speed_info_line_str, "SPEED T:%d L:%d R:%d   ", (int)TARGET_SPEED, (int)WHEEL_SPEED_L, (int)WHEEL_SPEED_R);
-        ips114_show_string(0, 60, speed_info_line_str);
-        char image_info_line_str[48];
-        sprintf(image_info_line_str, "IMAGE B:%d F:%d   ", (int)binary_threshold, (int)MT9V03X_FPS_DEF);
-        ips114_show_string(0, 80, image_info_line_str);
-        // ips114_show_int(0, 130, TARGET_SPEED, 3);                                                                                 // 显示目标速度
-        // ips114_show_int(40, 130, WHEEL_SPEED_L, 5);                                                                               // 显示左轮速度
-        // ips114_show_int(80, 130, WHEEL_SPEED_R, 5);                                                                               // 显示右轮速度
-        // ips114_show_int(120, 130, binary_threshold, 3);                                                                           // 显示二值化阈值
+        ips114_show_gray_image(0, 0, (const uint8 *)mt9v03x_image, MT9V03X_W, MT9V03X_H, MT9V03X_W, MT9V03X_H, binary_threshold); // 显示灰度图像(缩小到原图面积1/4)
+        image_to_binary((const uint8 *)mt9v03x_image, binary_threshold);                                                          // 图像二值化处理
+        ips114_draw_line(34, 30, 154, 30, RGB565_RED);
+        ips114_draw_line(154, 30, 154, 90, RGB565_RED);
+        ips114_draw_line(34, 90, 154, 90, RGB565_RED);
+        ips114_draw_line(34, 30, 34, 90, RGB565_RED);
+        for (uint8 i = 30; i < 90; i++)
+        {
+            uint8 line_first_pos = 0;
+            uint8 line_last_pos = 0;
+            for (uint8 j = 34; j < 154; j++)
+            {
+                if (binary_image[j][i])
+                {
+                    line_first_pos = j;
+                    break;
+                }
+            }
+            for (int j = 154; j >= 34; j--)
+            {
+                if (binary_image[j][i])
+                {
+                    line_last_pos = j;
+                    break;
+                }
+            }
+            ips114_draw_point((uint16)(line_first_pos), (uint16)(i), RGB565_GREEN);
+            ips114_draw_point((uint16)(line_last_pos), (uint16)(i), RGB565_GREEN);
+            ips114_draw_point((uint16)((line_first_pos + line_last_pos) / 2), (uint16)(i), RGB565_BLUE);
+        }
         mt9v03x_finish_flag = 0;
-        image_to_binary((const uint8 *)mt9v03x_image, binary_threshold); // 图像二值化处理
     }
 }
 
