@@ -163,7 +163,7 @@ int core0_main(void)
     // 初始化编码器
     encoder_dir_init(ENCODER_1, ENCODER_1_A, ENCODER_1_B); // 编码器1初始化
     encoder_dir_init(ENCODER_3, ENCODER_3_A, ENCODER_3_B); // 编码器3初始化
-    pit_ms_init(CCU60_CH0, 30);                            // PIT定时器中断 用于计算轮速
+    pit_ms_init(CCU60_CH0, 20);                            // PIT定时器中断 用于计算轮速
 
     // 初始化板载LED灯 低电平点亮
     gpio_init(LED1, GPO, GPIO_LOW, GPO_PUSH_PULL); // 初始化 LED1 输出 默认低电平 推挽输出模式
@@ -181,7 +181,7 @@ int core0_main(void)
     // 按键功能控制定时器
     pit_ms_init(CCU61_CH0, 50);
     // UART3
-    pit_ms_init(CCU61_CH1, 1000);
+    // pit_ms_init(CCU61_CH1, 1000);
 
     cpu_wait_event_ready(); // 等待所有核心初始化完毕<务必保留>
 
@@ -302,14 +302,14 @@ int core0_main(void)
 }
 
 /*这个中断函数用来计算轮速
-每30ms进入一次中断
+每20ms进入一次中断
 */
 IFX_INTERRUPT(cc60_pit_ch0_isr, 0, CCU6_0_CH0_ISR_PRIORITY)
 {
     interrupt_global_enable(0); // 开启中断嵌套
     pit_clear_flag(CCU60_CH0);
-    WHEEL_SPEED_L = -1 * encoder_get_count(ENCODER_1) / 30;
-    WHEEL_SPEED_R = encoder_get_count(ENCODER_3) / 30;
+    WHEEL_SPEED_L = -1 * encoder_get_count(ENCODER_1) / 20;
+    WHEEL_SPEED_R = encoder_get_count(ENCODER_3) / 20;
     encoder_clear_count(ENCODER_1);
     encoder_clear_count(ENCODER_3);
     image_to_binary((const uint8 *)mt9v03x_image, binary_threshold);
@@ -374,29 +374,29 @@ IFX_INTERRUPT(cc61_pit_ch0_isr, 0, CCU6_1_CH0_ISR_PRIORITY)
     }
 }
 
-IFX_INTERRUPT(cc61_pit_ch1_isr, 0, CCU6_1_CH1_ISR_PRIORITY)
-{
-    interrupt_global_enable(0); // 开启中断嵌套
-    pit_clear_flag(CCU61_CH1);
-    // printf("binary_image_data:\n");
-    // for (uint16 current_binary_line = 0; current_binary_line < MT9V03X_H; current_binary_line++)
-    // {
-    //     printf("line %d: ", current_binary_line);
-    //     for (uint32 j = 0; j < MT9V03X_W; j++)
-    //     {
-    //         printf("%d ", binary_image[j][current_binary_line]);
-    //     }
-    //     printf("\n");
-    // }
+// IFX_INTERRUPT(cc61_pit_ch1_isr, 0, CCU6_1_CH1_ISR_PRIORITY)
+// {
+//     interrupt_global_enable(0); // 开启中断嵌套
+//     pit_clear_flag(CCU61_CH1);
+//     printf("binary_image_data:\n");
+//     for (uint16 current_binary_line = 0; current_binary_line < MT9V03X_H; current_binary_line++)
+//     {
+//         printf("line %d: ", current_binary_line);
+//         for (uint32 j = 0; j < MT9V03X_W; j++)
+//         {
+//             printf("%d ", binary_image[j][current_binary_line]);
+//         }
+//         printf("\n");
+//     }
 
-    // 计算并打印第59行（从0开始计数）的第一个和最后一个1的位置
-    // {
-    //     int16 first_pos = -1;
-    //     int16 last_pos = -1;
-    //     find_first_last_one_positions(59, &first_pos, &last_pos);
-    //     printf("row 59 first_1=%d, last_1=%d\n", first_pos, last_pos);
-    // }
-}
+//     计算并打印第59行（从0开始计数）的第一个和最后一个1的位置
+//     {
+//         int16 first_pos = -1;
+//         int16 last_pos = -1;
+//         find_first_last_one_positions(59, &first_pos, &last_pos);
+//         printf("row 59 first_1=%d, last_1=%d\n", first_pos, last_pos);
+//     }
+// }
 
 #pragma section all restore
 // **************************** 代码区域 ****************************
