@@ -47,9 +47,9 @@ int16 center_line_avg = 0;             // 直线循迹模式下车道中心线平均位置
 
 // 有刷电机相关配置
 // 根据实际的电机连接情况更改L/R轮的DIR和PWM引脚定义
-#define PWM_DEFAULT_DUTY (100)               // n乘这个数换算成常见的百分比占空比
+#define PWM_DEFAULT_DUTY (100)                // n乘这个数换算成常见的百分比占空比
 #define PWM_BASE_DUTY (10 * PWM_DEFAULT_DUTY) // 基础占空比 太小了转不动 太大了会起飞
-#define DIR_L (P02_4)                        // 可以调换顺序 或者把线反着接
+#define DIR_L (P02_4)                         // 可以调换顺序 或者把线反着接
 #define PWM_L (ATOM0_CH5_P02_5)
 #define DIR_R (P02_6)
 #define PWM_R (ATOM0_CH7_P02_7)
@@ -362,7 +362,7 @@ IFX_INTERRUPT(cc61_pit_ch0_isr, 0, CCU6_1_CH0_ISR_PRIORITY)
         car_go = 1; // 发车
     }
 
-    if (mt9v03x_finish_flag)
+    if (mt9v03x_finish_flag && car_go == 0)
     {
         ips114_show_gray_image(0, 0, (const uint8 *)mt9v03x_image, MT9V03X_W, MT9V03X_H, MT9V03X_W, MT9V03X_H, binary_threshold); // 显示灰度图像
         ips114_draw_line(54, 40, 134, 40, RGB565_RED);
